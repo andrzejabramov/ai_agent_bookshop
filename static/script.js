@@ -3,6 +3,9 @@ let chatHistory = [];
 let currentPage = 1;
 let currentQuery = 'fantasy';
 
+// Простой кэш для страниц книг
+const booksCache = {};
+
 // DOM элементы
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
@@ -41,13 +44,11 @@ async function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // Добавляем сообщение пользователя
     addMessageToUI('user', text);
     chatHistory.push({ role: 'user', content: text });
     chatInput.value = '';
 
-    // Показываем индикатор загрузки
-    const loadingId = addMessageToUI('ai', 'Печатает...');
+    const loadingId = addMessageToUI('ai', 'Консультант подбирает ответ...');
 
     try {
         const response = await fetch('/api/chat', {
@@ -57,9 +58,12 @@ async function sendMessage() {
         });
         const data = await response.json();
 
-        // Удаляем "Печатает..." и добавляем реальный ответ
         document.getElementById(loadingId).remove();
-        addMessageToUI('ai', data.reply);
+
+        // Показываем источник ответа (можно убрать в продакшене)
+        const sourceTag = data.source === 'local' ? '⚡' : '🤖';
+        addMessageToUI('ai', `${sourceTag} ${data.reply}`);
+
         chatHistory.push({ role: 'assistant', content: data.reply });
     } catch (error) {
         document.getElementById(loadingId).remove();
@@ -101,40 +105,57 @@ exportCsvBtn.addEventListener('click', () => {
 
 // === Книги и Пагинация ===
 async function loadBooks(page) {
+    // Проверяем кэш
+    if (booksCache[page]) {
+        renderBooks(booksCache[page], page);
+        return;
+    }
+
     booksGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Загрузка книг...</p>';
 
     try {
         const response = await fetch(`/api/books?query=${encodeURIComponent(currentQuery)}&page=${page}`);
         const data = await response.json();
 
-        booksGrid.innerHTML = '';
-        if (data.books.length === 0) {
-            booksGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Книги не найдены.</p>';
-            return;
-        }
+        // Сохраняем в кэш
+        booksCache[page] = data;
 
-        data.books.forEach(book => {
-            const card = document.createElement('div');
-            card.className = 'book-card';
-            card.innerHTML = `
-                <img src="${book.cover || 'https://via.placeholder.com/150x200?text=No+Cover'}" class="book-cover" alt="${book.title}">
-                <div class="book-title">${book.title}</div>
-                <div class="book-author">${book.author}</div>
-                <div class="book-year">${book.year}</div>
-            `;
-            card.addEventListener('click', () => openBookModal(book));
-            booksGrid.appendChild(card);
-        });
-
-        currentPage = data.current_page;
-        pageIndicator.textContent = `Страница ${currentPage}`;
-        prevPageBtn.disabled = currentPage <= 1;
-        // Упрощенная логика: если книг меньше 12, значит это последняя страница
-        nextPageBtn.disabled = data.books.length < 12;
-
+        renderBooks(data, page);
     } catch (error) {
         booksGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red;">Ошибка загрузки книг.</p>';
     }
+}
+
+// Вынесенная функция рендеринга книг
+function renderBooks(data, page) {
+    booksGrid.innerHTML = '';
+
+    if (data.books.length === 0) {
+        booksGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Книги не найдены.</p>';
+        return;
+    }
+
+    data.books.forEach(book => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+
+        // Используем -M.jpg (medium, ~200px) — оптимальный баланс качества и скорости
+        const coverUrl = book.cover || 'https://via.placeholder.com/150x200?text=No+Cover';
+
+        card.innerHTML = `
+            <img src="${coverUrl}" class="book-cover" alt="${book.title}" loading="lazy" decoding="async">
+            <div class="book-title">${book.title}</div>
+            <div class="book-author">${book.author}</div>
+            <div class="book-year">${book.year}</div>
+        `;
+        card.addEventListener('click', () => openBookModal(book));
+        booksGrid.appendChild(card);
+    });
+
+    currentPage = data.current_page;
+    pageIndicator.textContent = `Страница ${currentPage}`;
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = data.books.length < 12;
 }
 
 prevPageBtn.addEventListener('click', () => {
@@ -147,6 +168,7 @@ nextPageBtn.addEventListener('click', () => {
 
 // === Модальное окно и AI-питч ===
 function openBookModal(book) {
+    // В модалке используем большую обложку (-M.jpg)
     modalCover.src = book.cover || 'https://via.placeholder.com/250x350?text=No+Cover';
     modalTitle.textContent = book.title;
     modalAuthor.textContent = book.author;
