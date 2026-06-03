@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умная Полка | AI-Книжный</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Умная Полка | AI-Книжный</h1>
+    </header>
+
+    <main>
+        <!-- Левая панель: Чат (33%) -->
+        <section class="chat-panel">
+            <div class="chat-header">Консультант</div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">Здравствуйте! Я ваш виртуальный консультант. Какую книгу вы ищете или о чем хотите поговорить?</div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="chatInput" placeholder="Введите сообщение..." rows="3"></textarea>
+                <div class="chat-controls">
+                    <button id="sendBtn" class="btn-primary">Отправить</button>
+                    <button id="exportCsvBtn" class="btn-secondary">Скачать CSV</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Правая панель: Книги (67%) -->
+        <section class="books-panel">
+            <div class="books-header">
+                <h2 id="themeTitle">Рекомендуемая фантастика</h2>
+            </div>
+            <div class="books-grid" id="booksGrid">
+                <!-- Карточки книг будут здесь -->
+            </div>
+            <div class="pagination" id="pagination">
+                <button id="prevPage" class="btn-secondary" disabled>← Назад</button>
+                <span id="pageIndicator">Страница 1</span>
+                <button id="nextPage" class="btn-secondary">Вперед →</button</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Умная Полка. Демонстрационный проект AI-агента.</p>
+    </footer>
+
+    <!-- Модальное окно для книги -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <img id="modalCover" src="" alt="Обложка" class="modal-cover">
+                <div class="modal-info">
+                    <h3 id="modalTitle"></h3>
+                    <p class="modal-author" id="modalAuthor"></p>
+                    <p class="modal-year" id="modalYear"></p>
+                    <div class="ai-pitch-box">
+                        <strong>💡 Рекомендация консультанта:</strong>
+                        <p id="modalPitch">Загрузка рекомендации...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
