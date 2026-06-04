@@ -170,7 +170,7 @@ ai_agent_bookshop/
 
 ### Локальная разработка
 
-![Диалог с AI-консультантом](docs/img/screen_dialog.png)
+![Диалог с AI-консультантом](img/screen_dialog.png)
 
 **Особенности:**
 - Мгновенные ответы из базы знаний (⚡)
@@ -182,7 +182,7 @@ ai_agent_bookshop/
 
 **URL:** http://aibooks.pythonanywhere.com
 
-![Работа сайта на хостинге](docs/img/screen_site.png)
+![Работа сайта на хостинге](img/screen_site.png)
 
 **Характеристики:**
 - Бесплатный хостинг без SSL
